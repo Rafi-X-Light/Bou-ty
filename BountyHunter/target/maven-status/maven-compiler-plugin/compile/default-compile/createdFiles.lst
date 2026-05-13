@@ -1,5 +1,6 @@
 com/bountyhunter/NotificationData.class
 com/bountyhunter/BountyManager$1.class
+com/bountyhunter/WorldGuardHook.class
 com/bountyhunter/BountyManager.class
 com/bountyhunter/BountyHunterPlugin.class
 com/bountyhunter/CrossplayUtil.class

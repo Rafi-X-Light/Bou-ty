@@ -10,7 +10,7 @@ softdepend:
 commands:
   bounty:
     description: BountyHunter main command
-    usage: /bounty <set|remove|extend|list|top|info|history|reload>
+    usage: /bounty <set|remove|extend|list|top|info|history [page]|reload>
     permission: bountyhunter.use
 permissions:
   bountyhunter.use:

@@ -46,7 +46,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
                 handleInfo(sender, args);
                 break;
             case "history":
-                handleHistory(sender);
+                handleHistory(sender, args);
                 break;
             case "reload":
                 handleReload(sender);
@@ -188,7 +188,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
             b.setExpiryTimestamp(b.getExpiryTimestamp() + extendMillis);
         }
 
-        player.sendMessage("🕐 <gold>[BountyHunter]</gold> Your bounty on " + targetName + " has been extended by " + plugin.getConfig().getInt("settings.extend-hours") + " hours.");
+        plugin.getMessageUtil().sendMessage(player, "🕐 <gold>[BountyHunter]</gold> Your bounty on " + targetName + " has been extended by " + plugin.getConfig().getInt("settings.extend-hours") + " hours.");
         plugin.getMessageUtil().playSound(player, "BLOCK_NOTE_BLOCK_CHIME");
     }
 
@@ -272,13 +272,28 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void handleHistory(CommandSender sender) {
+    private void handleHistory(CommandSender sender, String[] args) {
         List<HistoryEntry> history = plugin.getBountyManager().getHistory();
+        if (history.isEmpty()) {
+            sender.sendMessage("No bounty history yet.");
+            return;
+        }
+
+        int page = 1;
+        if (args.length > 1) {
+            try { page = Integer.parseInt(args[1]); } catch (NumberFormatException ignored) {}
+        }
+
+        int totalPages = (int) Math.ceil(history.size() / 10.0);
+        page = Math.max(1, Math.min(page, totalPages));
+
         sender.sendMessage("<gold>--- Recent Collections ---</gold>");
-        for (HistoryEntry e : history) {
-            long ago = (System.currentTimeMillis() - e.getTimestamp()) / 60000L; // minutes
+        for (int i = (page - 1) * 10; i < Math.min(page * 10, history.size()); i++) {
+            HistoryEntry e = history.get(i);
+            long ago = (System.currentTimeMillis() - e.getTimestamp()) / 60000L;
             sender.sendMessage("<red>" + e.getTargetName() + "</red> was killed by <yellow>" + e.getKillerName() + "</yellow> for <green>$" + e.getTotalAmount() + "</green> (" + ago + "m ago)");
         }
+        sender.sendMessage("<gold>Page " + page + "/" + totalPages + " (Use /bounty history <page>)</gold>");
     }
 
     private void handleReload(CommandSender sender) {
@@ -298,7 +313,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("/bounty list [page] - View active bounties");
         sender.sendMessage("/bounty top - Hunter leaderboard");
         sender.sendMessage("/bounty info <player> - Detailed bounty info");
-        sender.sendMessage("/bounty history - Recent collections");
+        sender.sendMessage("/bounty history [page] - Recent collections");
         if (sender.hasPermission("bountyhunter.admin")) {
             sender.sendMessage("/bounty reload - Reload config");
         }

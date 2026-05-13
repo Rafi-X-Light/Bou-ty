@@ -1,11 +1,5 @@
 package com.bountyhunter;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.sk89q.worldguard.protection.regions.RegionQuery;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -20,9 +14,11 @@ import java.util.stream.Collectors;
 
 public class BountyListener implements Listener {
     private final BountyHunterPlugin plugin;
+    private final WorldGuardHook worldGuardHook;
 
     public BountyListener(BountyHunterPlugin plugin) {
         this.plugin = plugin;
+        this.worldGuardHook = Bukkit.getPluginManager().getPlugin("WorldGuard") != null ? new WorldGuardHook(plugin) : null;
     }
 
     @EventHandler
@@ -75,7 +71,8 @@ public class BountyListener implements Listener {
         }
 
         // 2. Check death location is not in a safe zone
-        if (isInSafeZone(target)) {
+        List<String> safeZones = plugin.getConfig().getStringList("settings.safe-zones");
+        if (worldGuardHook != null && worldGuardHook.isInSafeZone(target, safeZones)) {
             killer.sendMessage("You cannot collect bounties in a safe zone.");
             return;
         }
@@ -129,27 +126,14 @@ public class BountyListener implements Listener {
         plugin.getMessageUtil().playSound(killer, "ENTITY_EXPERIENCE_ORB_PICKUP");
 
         // 9. Log IP check warning
-        if (plugin.getConfig().getBoolean("settings.log-ip-warnings")) {
+        if (plugin.getConfig().getBoolean("settings.log-ip-warnings")
+                && killer.getAddress() != null && target.getAddress() != null) {
             String killerIP = killer.getAddress().getAddress().getHostAddress();
             String targetIP = target.getAddress().getAddress().getHostAddress();
             if (killerIP.equals(targetIP)) {
                 plugin.getLogger().warning("Potential self-farming detected! Killer: " + killer.getName() + " and Target: " + target.getName() + " have the same IP: " + killerIP);
             }
         }
-    }
-
-    private boolean isInSafeZone(Player player) {
-        if (Bukkit.getPluginManager().getPlugin("WorldGuard") == null) return false;
-        
-        List<String> safeZones = plugin.getConfig().getStringList("settings.safe-zones");
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionQuery query = container.createQuery();
-        ApplicableRegionSet set = query.getApplicableRegions(BukkitAdapter.adapt(player.getLocation()));
-        
-        for (ProtectedRegion region : set) {
-            if (safeZones.contains(region.getId())) return true;
-        }
-        return false;
     }
 
     private void refundBounties(List<BountyData> bounties) {

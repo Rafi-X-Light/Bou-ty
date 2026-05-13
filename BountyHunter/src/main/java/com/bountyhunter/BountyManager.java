@@ -36,7 +36,7 @@ public class BountyManager {
     }
 
     private void loadData() {
-        activeBounties = loadList("bounties.json", new TypeToken<List<BountyData>>(){}.getType());
+        activeBounties = Collections.synchronizedList(loadList("bounties.json", new TypeToken<List<BountyData>>(){}.getType()));
         history = loadList("history.json", new TypeToken<List<HistoryEntry>>(){}.getType());
         
         List<LeaderboardEntry> lbList = loadList("leaderboard.json", new TypeToken<List<LeaderboardEntry>>(){}.getType());
@@ -80,14 +80,16 @@ public class BountyManager {
             long warningMillis = plugin.getConfig().getInt("settings.expiry-warning-hours") * 3600000L;
             double refundPercent = plugin.getConfig().getDouble("settings.expiry-refund-percent") / 100.0;
 
-            Iterator<BountyData> it = activeBounties.iterator();
-            while (it.hasNext()) {
-                BountyData bounty = it.next();
-                if (now >= bounty.getExpiryTimestamp()) {
-                    it.remove();
-                    processExpiry(bounty, refundPercent);
-                } else if (now >= bounty.getExpiryTimestamp() - warningMillis && now < bounty.getExpiryTimestamp() - warningMillis + 60000L) {
-                    sendExpiryWarning(bounty);
+            synchronized (activeBounties) {
+                Iterator<BountyData> it = activeBounties.iterator();
+                while (it.hasNext()) {
+                    BountyData bounty = it.next();
+                    if (now >= bounty.getExpiryTimestamp()) {
+                        it.remove();
+                        processExpiry(bounty, refundPercent);
+                    } else if (now >= bounty.getExpiryTimestamp() - warningMillis && now < bounty.getExpiryTimestamp() - warningMillis + 60000L) {
+                        sendExpiryWarning(bounty);
+                    }
                 }
             }
         }, 1200L, 1200L);
@@ -148,7 +150,9 @@ public class BountyManager {
         Long lastPlaced = targets.get(target);
         if (lastPlaced == null) return false;
         long cooldownMillis = plugin.getConfig().getInt("settings.same-target-cooldown-seconds") * 1000L;
-        return System.currentTimeMillis() - lastPlaced < cooldownMillis;
+        boolean onCooldown = System.currentTimeMillis() - lastPlaced < cooldownMillis;
+        if (!onCooldown) targets.remove(target);
+        return onCooldown;
     }
 
     public long getCooldownRemaining(UUID placer, UUID target) {
@@ -157,7 +161,9 @@ public class BountyManager {
         Long lastPlaced = targets.get(target);
         if (lastPlaced == null) return 0;
         long cooldownMillis = plugin.getConfig().getInt("settings.same-target-cooldown-seconds") * 1000L;
-        return Math.max(0, (lastPlaced + cooldownMillis) - System.currentTimeMillis()) / 1000L;
+        long remaining = Math.max(0, (lastPlaced + cooldownMillis) - System.currentTimeMillis()) / 1000L;
+        if (remaining == 0) targets.remove(target);
+        return remaining;
     }
 
     public void removeBounty(BountyData bounty) {
