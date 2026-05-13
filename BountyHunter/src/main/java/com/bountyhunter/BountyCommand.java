@@ -156,7 +156,8 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
         }
 
         plugin.getEconomyHandler().deposit(player.getUniqueId(), totalRefund);
-        player.sendMessage("Cancelled your bounties on " + targetName + ". Refunded $" + String.format("%.2f", totalRefund) + " (after 20% fee).");
+        int feePercent = 100 - plugin.getConfig().getInt("settings.cancel-refund-percent");
+        player.sendMessage("Cancelled your bounties on " + targetName + ". Refunded $" + String.format("%.2f", totalRefund) + " (after " + feePercent + "% fee).");
     }
 
     private void handleExtend(CommandSender sender, String[] args) {
