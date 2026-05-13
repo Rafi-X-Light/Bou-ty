@@ -209,7 +209,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
         }
 
         List<UUID> targets = new ArrayList<>(grouped.keySet());
-        int totalPages = (int) Math.ceil(targets.size() / 5.0);
+        int totalPages = Math.max(1, (int) Math.ceil(targets.size() / 5.0));
         page = Math.max(1, Math.min(page, totalPages));
 
         for (int i = (page - 1) * 5; i < Math.min(page * 5, targets.size()); i++) {
