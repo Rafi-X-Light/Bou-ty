@@ -1,0 +1,17 @@
+settings:
+  min-bounty-amount: 100
+  max-bounty-amount: 100000
+  same-target-cooldown-seconds: 600
+  bounty-expiry-hours: 48
+  extend-hours: 12
+  extend-fee: 50
+  cancel-refund-percent: 80
+  expiry-refund-percent: 50
+  expiry-warning-hours: 6
+  wealth-gate-percent: 50
+  actionbar-reminder-interval-seconds: 60
+  broadcast-on-set: true
+  broadcast-on-collect: true
+  safe-zones:
+    - spawn
+  log-ip-warnings: true

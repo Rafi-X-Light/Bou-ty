@@ -1,0 +1,19 @@
+name: BountyHunter
+version: 2.0.0
+main: com.bountyhunter.BountyHunterPlugin
+api-version: 1.21
+depend:
+  - Vault
+softdepend:
+  - WorldGuard
+  - Floodgate
+commands:
+  bounty:
+    description: BountyHunter main command
+    usage: /bounty <set|remove|extend|list|top|info|history|reload>
+    permission: bountyhunter.use
+permissions:
+  bountyhunter.use:
+    default: true
+  bountyhunter.admin:
+    default: op
